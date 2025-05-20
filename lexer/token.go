@@ -4,6 +4,7 @@ type TokenKind uint8
 
 const (
 	EOF TokenKind = iota
+	NEWLINE
 	UNDERSCORE_1
 	UNDERSCORE_2
 	ASTERISK_1
@@ -13,7 +14,7 @@ const (
 	HASH_3
 	HASH_4
 	HASH_5
-	TAB
+	INDENTATION
 	STRING
 )
 
@@ -23,17 +24,23 @@ type Token struct {
 }
 
 func isSyntax(r rune) bool {
-	if r == '_' || r == '*' || r == '#' {
+	if r == '_' || r == '*' || r == '#' || r == '\n' {
 		return true
 	}
 
 	return false
 }
 
+func NewEOF() Token {
+	return Token{EOF, EOF.Literal()}
+}
+
 func (tk TokenKind) Literal() string {
 	switch tk {
 	case EOF:
 		return "[EOF]"
+	case NEWLINE:
+		return "[NEWLINE]"
 	case UNDERSCORE_1:
 		return "_"
 	case UNDERSCORE_2:
@@ -52,8 +59,8 @@ func (tk TokenKind) Literal() string {
 		return "####"
 	case HASH_5:
 		return "#####"
-	case TAB:
-		return "[TAB]"
+	case INDENTATION:
+		return "[INDENTATION]"
 	case STRING:
 		return "[STRING]"
 	default:
