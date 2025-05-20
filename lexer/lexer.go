@@ -70,15 +70,17 @@ func (l *Lexer) lexHash() (Token, int, error) {
 func (l *Lexer) lexString() (Token, int, error) {
 	l.unread()
 	var literal string
+	span := -1
 
 	for {
 		r, _, err := l.reader.ReadRune()
 		l.poscol++
 		l.pos++
+		span++
 
 		if err != nil && err == io.EOF {
 			l.unread()
-			return Token{STRING, literal}, l.pos - len(literal) + 1, nil
+			return Token{STRING, literal}, l.pos - span + 1, nil
 		}
 
 		if err != nil {
@@ -87,7 +89,7 @@ func (l *Lexer) lexString() (Token, int, error) {
 
 		if isSyntax(r) {
 			l.unread()
-			return Token{STRING, literal}, l.pos - len(literal) + 1, nil
+			return Token{STRING, literal}, l.pos - span + 1, nil
 		}
 
 		literal += string(r)

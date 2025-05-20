@@ -19,7 +19,7 @@ func main() {
 			panic(err)
 		}
 
-		println(p, t.Literal, t.Kind.Literal())
+		println(p, " -> ", t.Literal)
 
 		if t.Kind == lexer.EOF {
 			break
