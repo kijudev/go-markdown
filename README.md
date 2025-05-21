@@ -1,1 +1,1 @@
-# Lubię
+# A proof of concept lexer
