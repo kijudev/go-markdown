@@ -4,26 +4,67 @@ import (
 	"bufio"
 	"errors"
 	"io"
+	"strings"
 	"unicode"
 )
 
 type Lexer struct {
-	reader *bufio.Reader
-	posrow int
-	poscol int
-	pos    int
+	readerSource io.Reader
+	reader       *bufio.Reader
+	posrow       int
+	poscol       int
+	pos          int
 }
 
 func NewLexer(reader io.Reader) *Lexer {
 	return &Lexer{
-		reader: bufio.NewReader(reader),
-		posrow: 0,
-		poscol: -1,
-		pos:    -1,
+		readerSource: reader,
+		reader:       bufio.NewReader(reader),
+		posrow:       0,
+		poscol:       -1,
+		pos:          -1,
 	}
 }
 
-func (l *Lexer) SafeLex() (Token, int, error) {
+func (l *Lexer) Tokenize() ([]Token, error) {
+	l.Reset()
+	var tokens []Token
+
+	for {
+		t, _, err := l.Lex()
+		i := len(tokens)
+
+		if err != nil {
+			return []Token{}, err
+		}
+
+		if t.Kind == EOF {
+			break
+		}
+
+		if t.Kind == STRING {
+			t.Literal = strings.Trim(t.Literal, " ")
+		}
+
+		if i == 0 {
+			tokens = append(tokens, t)
+			continue
+		}
+
+		tokens = append(tokens, t)
+	}
+
+	return tokens, nil
+}
+
+func (l *Lexer) Reset() {
+	l.reader.Reset(l.readerSource)
+	l.posrow = 0
+	l.poscol = -1
+	l.pos = -1
+}
+
+func (l *Lexer) Lex() (Token, int, error) {
 	r, _, err := l.reader.ReadRune()
 	l.poscol++
 	l.pos++
@@ -83,7 +124,7 @@ func (l *Lexer) lexNumbering() (Token, int, error) {
 		return Token{NUMBERING, t.Literal}, p, nil
 	}
 
-	l.unread()
+	l.mustUnread()
 	return t, p, nil
 }
 
@@ -129,7 +170,7 @@ func (l *Lexer) lexIndentation() (Token, int, error) {
 }
 
 func (l *Lexer) lexString() (Token, int, error) {
-	l.unread()
+	l.mustUnread()
 	var literal string
 	span := -1
 
@@ -140,7 +181,7 @@ func (l *Lexer) lexString() (Token, int, error) {
 		span++
 
 		if err != nil && err == io.EOF {
-			l.unread()
+			l.mustUnread()
 			return Token{STRING, literal}, l.pos - span + 1, nil
 		}
 
@@ -149,7 +190,7 @@ func (l *Lexer) lexString() (Token, int, error) {
 		}
 
 		if isSyntax(r) {
-			l.unread()
+			l.mustUnread()
 			return Token{STRING, literal}, l.pos - span + 1, nil
 		}
 
@@ -164,7 +205,7 @@ func (l *Lexer) lexRange(target rune, kinds ...TokenKind) (Token, int, error) {
 		l.pos++
 
 		if err != nil && err == io.EOF {
-			l.unread()
+			l.mustUnread()
 			return Token{kinds[i-1], kinds[i-1].Literal()}, l.pos - i + 1, nil
 		}
 
@@ -173,18 +214,18 @@ func (l *Lexer) lexRange(target rune, kinds ...TokenKind) (Token, int, error) {
 		}
 
 		if r != target {
-			l.unread()
+			l.mustUnread()
 			return Token{kinds[i-1], kinds[i-1].Literal()}, l.pos - i + 1, nil
 		}
 	}
 
-	l.unread()
+	l.mustUnread()
 	tk := kinds[len(kinds)-1]
 	return Token{tk, tk.Literal()}, l.pos - len(kinds) + 1, nil
 }
 
 func (l *Lexer) lexConsecutive(checkFn func(rune) bool, kind TokenKind) (Token, int, error) {
-	l.unread()
+	l.mustUnread()
 	var literal string
 	span := -1
 
@@ -194,7 +235,7 @@ func (l *Lexer) lexConsecutive(checkFn func(rune) bool, kind TokenKind) (Token, 
 		l.pos++
 
 		if err != nil && err == io.EOF {
-			l.unread()
+			l.mustUnread()
 			return Token{kind, literal}, l.pos - span + 1, nil
 		}
 
@@ -203,7 +244,7 @@ func (l *Lexer) lexConsecutive(checkFn func(rune) bool, kind TokenKind) (Token, 
 		}
 
 		if !checkFn(r) {
-			l.unread()
+			l.mustUnread()
 			return Token{kind, literal}, l.pos - span + 1, nil
 		}
 
@@ -211,15 +252,15 @@ func (l *Lexer) lexConsecutive(checkFn func(rune) bool, kind TokenKind) (Token, 
 	}
 }
 
-func (l *Lexer) unread() {
-	err := l.safeUnread()
+func (l *Lexer) mustUnread() {
+	err := l.unread()
 
 	if err != nil {
 		panic(err)
 	}
 }
 
-func (l *Lexer) safeUnread() error {
+func (l *Lexer) unread() error {
 	err := l.reader.UnreadRune()
 
 	if err != nil {

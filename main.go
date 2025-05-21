@@ -7,22 +7,20 @@ import (
 )
 
 func main() {
-	file, _ := os.Open("./README.md")
-	defer file.Close()
+	file, err := os.Open("./README.md")
 
-	l := lexer.NewLexer(file)
+	if err != nil {
+		panic(err)
+	}
 
-	for {
-		t, p, err := l.SafeLex()
+	lexer := lexer.NewLexer(file)
+	tokens, err := lexer.Tokenize()
 
-		if err != nil {
-			panic(err)
-		}
+	if err != nil {
+		panic(err)
+	}
 
-		println(p, " -> ", t.Literal)
-
-		if t.Kind == lexer.EOF {
-			break
-		}
+	for _, t := range tokens {
+		println(t.Literal)
 	}
 }
