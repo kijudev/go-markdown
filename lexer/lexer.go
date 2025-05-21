@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"errors"
 	"io"
-	"strings"
 	"unicode"
 )
 
@@ -32,7 +31,6 @@ func (l *Lexer) Tokenize() ([]Token, error) {
 
 	for {
 		t, _, err := l.Lex()
-		i := len(tokens)
 
 		if err != nil {
 			return []Token{}, err
@@ -40,15 +38,6 @@ func (l *Lexer) Tokenize() ([]Token, error) {
 
 		if t.Kind == EOF {
 			break
-		}
-
-		if t.Kind == STRING {
-			t.Literal = strings.Trim(t.Literal, " ")
-		}
-
-		if i == 0 {
-			tokens = append(tokens, t)
-			continue
 		}
 
 		tokens = append(tokens, t)
