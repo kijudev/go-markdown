@@ -37,6 +37,8 @@ func (l *Lexer) SafeLex() (Token, int, error) {
 	}
 
 	switch r {
+	case '\\':
+		return l.lexEscape()
 	case '_':
 		return l.lexUnderscore()
 	case '*':
@@ -44,28 +46,82 @@ func (l *Lexer) SafeLex() (Token, int, error) {
 	case '#':
 		return l.lexHash()
 	case '\n':
-		l.poscol = -1
-		l.posrow++
-		return Token{NEWLINE, NEWLINE.Literal()}, l.pos, nil
+		return l.lexNewline()
+	case '-':
+		return l.lexDash()
+	case '=':
+		return l.lexEq()
 	default:
 		if l.poscol == 0 && unicode.IsSpace(r) {
 			return l.lexIndentation()
+		}
+
+		if unicode.IsDigit(r) {
+			return l.lexNumbering()
 		}
 
 		return l.lexString()
 	}
 }
 
+func (l *Lexer) lexEscape() (Token, int, error) {
+	return Token{ESCAPE, ESCAPE.Literal()}, l.pos, nil
+}
+
+func (l *Lexer) lexNumbering() (Token, int, error) {
+	t, p, err := l.lexConsecutive(unicode.IsDigit, STRING)
+
+	if err != nil {
+		return Token{}, p, err
+	}
+
+	r, _, err := l.reader.ReadRune()
+	l.poscol++
+	l.pos++
+
+	if r == '.' {
+		return Token{NUMBERING, t.Literal}, p, nil
+	}
+
+	l.unread()
+	return t, p, nil
+}
+
+func (l *Lexer) lexDash() (Token, int, error) {
+	t, p, err := l.lexConsecutive(func(r rune) bool { return r == '-' }, DASH_MULTIPLE)
+
+	if err != nil {
+		return Token{}, p, err
+	}
+
+	if len(t.Literal) == 1 {
+		return Token{DASH_SINGLE, DASH_SINGLE.Literal()}, p, nil
+	}
+
+	return t, p, nil
+}
+
+func (l *Lexer) lexEq() (Token, int, error) {
+	return l.lexConsecutive(func(r rune) bool { return r == '=' }, EQ)
+}
+
+func (l *Lexer) lexNewline() (Token, int, error) {
+
+	l.poscol = -1
+	l.posrow++
+	return Token{NEWLINE, NEWLINE.Literal()}, l.pos, nil
+}
+
 func (l *Lexer) lexUnderscore() (Token, int, error) {
-	return l.lexRange('_', UNDERSCORE_1, UNDERSCORE_2)
+	return l.lexRange('_', UNDERSCORE_1, UNDERSCORE_2, UNDERSCORE_3)
 }
 
 func (l *Lexer) lexAsterisk() (Token, int, error) {
-	return l.lexRange('*', ASTERISK_1, ASTERISK_2)
+	return l.lexRange('*', ASTERISK_1, ASTERISK_2, ASTERISK_3)
 }
 
 func (l *Lexer) lexHash() (Token, int, error) {
-	return l.lexRange('#', HASH_1, HASH_2, HASH_3, HASH_4, HASH_5)
+	return l.lexRange('#', HASH_1, HASH_2, HASH_3, HASH_4, HASH_5, HASH_6)
 }
 
 func (l *Lexer) lexIndentation() (Token, int, error) {
