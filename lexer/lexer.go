@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"io"
+	"unicode"
 )
 
 type Lexer struct {
@@ -47,6 +48,10 @@ func (l *Lexer) SafeLex() (Token, int, error) {
 		l.posrow++
 		return Token{NEWLINE, NEWLINE.Literal()}, l.pos, nil
 	default:
+		if l.poscol == 0 && unicode.IsSpace(r) {
+			return l.lexIndentation()
+		}
+
 		return l.lexString()
 	}
 }
@@ -63,9 +68,9 @@ func (l *Lexer) lexHash() (Token, int, error) {
 	return l.lexRange('#', HASH_1, HASH_2, HASH_3, HASH_4, HASH_5)
 }
 
-// func (l *Lexer) lexIndentation() (Token, int, error) {
-
-// }
+func (l *Lexer) lexIndentation() (Token, int, error) {
+	return l.lexConsecutive(unicode.IsSpace, INDENTATION)
+}
 
 func (l *Lexer) lexString() (Token, int, error) {
 	l.unread()
@@ -120,6 +125,34 @@ func (l *Lexer) lexRange(target rune, kinds ...TokenKind) (Token, int, error) {
 	l.unread()
 	tk := kinds[len(kinds)-1]
 	return Token{tk, tk.Literal()}, l.pos - len(kinds) + 1, nil
+}
+
+func (l *Lexer) lexConsecutive(checkFn func(rune) bool, kind TokenKind) (Token, int, error) {
+	l.unread()
+	var literal string
+	span := -1
+
+	for {
+		r, _, err := l.reader.ReadRune()
+		l.poscol++
+		l.pos++
+
+		if err != nil && err == io.EOF {
+			l.unread()
+			return Token{kind, literal}, l.pos - span + 1, nil
+		}
+
+		if err != nil {
+			return Token{}, l.pos, errors.Join(ErrRuneRead, err)
+		}
+
+		if !checkFn(r) {
+			l.unread()
+			return Token{kind, literal}, l.pos - span + 1, nil
+		}
+
+		literal += string(r)
+	}
 }
 
 func (l *Lexer) unread() {
