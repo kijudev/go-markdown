@@ -133,3 +133,7 @@ func runeIsSyntax(r rune) bool {
 		TokenKindEQ,
 	)(r)
 }
+
+func runeIsNotSyntax(r rune) bool {
+	return !runeIsSyntax(r)
+}
