@@ -18,6 +18,7 @@ type TokenPos struct {
 type TokenInfo struct {
 	Token Token
 	Pos   TokenPos
+	Span  int
 }
 
 const (

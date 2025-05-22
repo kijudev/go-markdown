@@ -86,7 +86,7 @@ func (l *Lexer) lexHash() (TokenInfo, error) {
 	pos := l.pos
 
 	if err != nil {
-		return TokenInfo{Pos: pos}, err
+		return TokenInfo{}, err
 	}
 
 	var kind TokenKind
@@ -113,6 +113,7 @@ func (l *Lexer) lexHash() (TokenInfo, error) {
 	return TokenInfo{
 		Token: Token{kind, lit},
 		Pos:   pos,
+		Span:  span,
 	}, nil
 }
 
@@ -121,7 +122,7 @@ func (l *Lexer) lexDash() (TokenInfo, error) {
 	pos := l.pos
 
 	if err != nil {
-		return TokenInfo{Pos: pos}, err
+		return TokenInfo{}, err
 	}
 
 	var kind TokenKind
@@ -140,6 +141,7 @@ func (l *Lexer) lexDash() (TokenInfo, error) {
 	return TokenInfo{
 		Token: Token{kind, lit},
 		Pos:   pos,
+		Span:  span,
 	}, nil
 }
 
@@ -148,7 +150,7 @@ func (l *Lexer) lexAsterisk() (TokenInfo, error) {
 	pos := l.pos
 
 	if err != nil {
-		return TokenInfo{Pos: pos}, err
+		return TokenInfo{}, err
 	}
 
 	var kind TokenKind
@@ -169,6 +171,7 @@ func (l *Lexer) lexAsterisk() (TokenInfo, error) {
 	return TokenInfo{
 		Token: Token{kind, lit},
 		Pos:   pos,
+		Span:  span,
 	}, nil
 }
 
@@ -177,7 +180,7 @@ func (l *Lexer) lexUnderscore() (TokenInfo, error) {
 	pos := l.pos
 
 	if err != nil {
-		return TokenInfo{Pos: pos}, err
+		return TokenInfo{}, err
 	}
 
 	var kind TokenKind
@@ -198,6 +201,7 @@ func (l *Lexer) lexUnderscore() (TokenInfo, error) {
 	return TokenInfo{
 		Token: Token{kind, lit},
 		Pos:   pos,
+		Span:  span,
 	}, nil
 }
 
@@ -207,11 +211,11 @@ func (l *Lexer) lexEscape() (TokenInfo, error) {
 	pos := l.pos
 
 	if err == io.EOF {
-		return TokenInfo{Pos: pos}, ErrEOF
+		return TokenInfo{}, ErrEOF
 	}
 
 	if err != nil {
-		return TokenInfo{Pos: pos}, ErrUnread
+		return TokenInfo{}, ErrUnread
 	}
 
 	r, _, err := l.reader.ReadRune()
@@ -223,11 +227,12 @@ func (l *Lexer) lexEscape() (TokenInfo, error) {
 		return TokenInfo{
 			Token: Token{TokenKindString, "\\"},
 			Pos:   pos,
+			Span:  1,
 		}, nil
 	}
 
 	if err != nil {
-		return TokenInfo{Pos: pos}, ErrUnread
+		return TokenInfo{}, ErrUnread
 	}
 
 	lit = string(r)
@@ -246,6 +251,7 @@ func (l *Lexer) lexEscape() (TokenInfo, error) {
 		return TokenInfo{
 			Token: Token{TokenKindString, lit},
 			Pos:   pos,
+			Span:  1,
 		}, nil
 	}
 
@@ -255,6 +261,7 @@ func (l *Lexer) lexEscape() (TokenInfo, error) {
 	return TokenInfo{
 		Token: Token{TokenKindString, "\\" + lit},
 		Pos:   pos,
+		Span:  2,
 	}, nil
 }
 
@@ -263,11 +270,11 @@ func (l *Lexer) lexNewline() (TokenInfo, error) {
 	pos := l.pos
 
 	if err == io.EOF {
-		return TokenInfo{Pos: pos}, ErrEOF
+		return TokenInfo{}, ErrEOF
 	}
 
 	if err != nil {
-		return TokenInfo{Pos: pos}, ErrRead
+		return TokenInfo{}, ErrRead
 	}
 
 	l.pos.X = 0
@@ -277,6 +284,7 @@ func (l *Lexer) lexNewline() (TokenInfo, error) {
 	return TokenInfo{
 		Token: Token{TokenKindNewline, "\n"},
 		Pos:   pos,
+		Span:  1,
 	}, nil
 }
 
@@ -285,7 +293,7 @@ func (l *Lexer) lexWhitespace() (TokenInfo, error) {
 	pos := l.pos
 
 	if err != nil {
-		return TokenInfo{Pos: pos}, err
+		return TokenInfo{}, err
 	}
 
 	l.pos.X += span
@@ -294,6 +302,7 @@ func (l *Lexer) lexWhitespace() (TokenInfo, error) {
 	return TokenInfo{
 		Token: Token{TokenKindWhitespace, lit},
 		Pos:   pos,
+		Span:  span,
 	}, nil
 }
 
@@ -302,7 +311,7 @@ func (l *Lexer) lexNumber() (TokenInfo, error) {
 	pos := l.pos
 
 	if err != nil {
-		return TokenInfo{Pos: pos}, err
+		return TokenInfo{}, err
 	}
 
 	r, _, err := peekOneRune(l.reader)
@@ -311,6 +320,7 @@ func (l *Lexer) lexNumber() (TokenInfo, error) {
 		return TokenInfo{
 			Token: Token{TokenKindNumber, lit},
 			Pos:   pos,
+			Span:  span,
 		}, nil
 	}
 
@@ -321,7 +331,7 @@ func (l *Lexer) lexNumber() (TokenInfo, error) {
 	if r == '.' {
 		_, _, err := l.reader.ReadRune()
 		if err != nil {
-			return TokenInfo{Pos: pos}, ErrRead
+			return TokenInfo{}, ErrRead
 		}
 
 		l.pos.X += span + 1
@@ -330,6 +340,7 @@ func (l *Lexer) lexNumber() (TokenInfo, error) {
 		return TokenInfo{
 			Token: Token{TokenKindNumbering, lit},
 			Pos:   pos,
+			Span:  span,
 		}, nil
 	}
 
@@ -339,6 +350,7 @@ func (l *Lexer) lexNumber() (TokenInfo, error) {
 	return TokenInfo{
 		Token: Token{TokenKindNumber, lit},
 		Pos:   pos,
+		Span:  span,
 	}, nil
 }
 
@@ -355,7 +367,7 @@ func (l *Lexer) lexString() (TokenInfo, error) {
 	pos := l.pos
 
 	if err != nil {
-		return TokenInfo{Pos: pos}, err
+		return TokenInfo{}, err
 	}
 
 	l.pos.X += span
@@ -364,5 +376,6 @@ func (l *Lexer) lexString() (TokenInfo, error) {
 	return TokenInfo{
 		Token: Token{TokenKindString, lit},
 		Pos:   pos,
+		Span:  span,
 	}, nil
 }
