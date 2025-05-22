@@ -22,7 +22,8 @@ func main() {
 
 	for _, ti := range tokens {
 		t := ti.Token
+		pos := ti.Pos
 
-		println(t.Kind.DebugName(), t.Lit)
+		println(t.Kind.DebugName(), pos.X, pos.Y, t.Lit)
 	}
 }
