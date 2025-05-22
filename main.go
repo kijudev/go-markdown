@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	lx := lexer.NewLexer(strings.NewReader("# === a"))
+	lx := lexer.NewLexer(strings.NewReader("#########"))
 
 	tokens, err := lx.Tokenize()
 	if err != nil {
@@ -18,6 +18,6 @@ func main() {
 		t := ti.Token
 		pos := ti.Pos
 
-		println(pos.Abs, t.Lit)
+		println(pos.Abs, t.Lit, t.Kind)
 	}
 }

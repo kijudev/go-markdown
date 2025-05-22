@@ -3,6 +3,7 @@ package lexer
 import (
 	"bufio"
 	"io"
+	"unicode"
 )
 
 type Lexer struct {
@@ -56,25 +57,31 @@ func (l *Lexer) Lex() (TokenInfo, error) {
 	}
 
 	switch r {
-	case TokenKindHashRune.Rune():
+	case TokenKindRuneHash.Rune():
 		return l.lexHash()
-	case TokenKindDashRune.Rune():
+	case TokenKindRuneDash.Rune():
 		return l.lexDash()
-	case TokenKindAsteriskRune.Rune():
+	case TokenKindRuneAsterisk.Rune():
 		return l.lexAsterisk()
-	case TokenKindUnderscoreRune.Rune():
+	case TokenKindRuneUnderscore.Rune():
 		return l.lexUnderscore()
-	case TokenKindDotRune.Rune():
-		return l.lexDot()
-	case TokenKindEscapeRune.Rune():
+	case TokenKindRuneEscape.Rune():
 		return l.lexEscape()
 	default:
+		if unicode.IsSpace(r) {
+			return l.lexWhitespace()
+		}
+
+		if unicode.IsDigit(r) {
+			return l.lexNumber()
+		}
+
 		return l.lexString()
 	}
 }
 
 func (l *Lexer) lexHash() (TokenInfo, error) {
-	lit, span, err := lexUntil(l.reader, runeIs(TokenKindHashRune), 6)
+	lit, span, err := lexUntil(l.reader, runeIs(TokenKindRuneHash), 6)
 
 	if err != nil {
 		return TokenInfo{}, err
@@ -105,7 +112,7 @@ func (l *Lexer) lexHash() (TokenInfo, error) {
 }
 
 func (l *Lexer) lexDash() (TokenInfo, error) {
-	lit, span, err := lexUntil(l.reader, runeIs(TokenKindDashRune), -1)
+	lit, span, err := lexUntil(l.reader, runeIs(TokenKindRuneDash), -1)
 
 	if err != nil {
 		return TokenInfo{}, err
@@ -128,7 +135,7 @@ func (l *Lexer) lexDash() (TokenInfo, error) {
 }
 
 func (l *Lexer) lexAsterisk() (TokenInfo, error) {
-	lit, span, err := lexUntil(l.reader, runeIs(TokenKindAsteriskRune), 3)
+	lit, span, err := lexUntil(l.reader, runeIs(TokenKindRuneAsterisk), 3)
 
 	if err != nil {
 		return TokenInfo{}, err
@@ -153,34 +160,121 @@ func (l *Lexer) lexAsterisk() (TokenInfo, error) {
 }
 
 func (l *Lexer) lexUnderscore() (TokenInfo, error) {
-	lit, span, err := lexUntil(l.reader, runeIs(TokenKindUnderscoreRune), 3)
+	lit, span, err := lexUntil(l.reader, runeIs(TokenKindRuneUnderscore), 3)
+
+	if err != nil {
+		return TokenInfo{}, err
+	}
+
+	var kind TokenKind
+	switch span {
+	case 1:
+		kind = TokenKindItalic
+	case 2:
+		kind = TokenKindBold
+	case 3:
+		kind = TokenKindBoldItalic
+	default:
+		kind = TokenKindString
+	}
+
+	return TokenInfo{
+		Token: Token{kind, lit},
+		Pos:   TokenPos{span, span, span},
+	}, nil
+}
+
+func (l *Lexer) lexEscape() (TokenInfo, error) {
+	var lit string
+	_, _, err := l.reader.ReadRune()
+
+	if err == io.EOF {
+		return TokenInfo{}, ErrEOF
+	}
+
+	if err != nil {
+		return TokenInfo{}, ErrUnread
+	}
+
+	r, _, err := l.reader.ReadRune()
+
+	if err == io.EOF {
+		return TokenInfo{}, ErrEOF
+	}
+
+	if err != nil {
+		return TokenInfo{}, ErrUnread
+	}
+
+	lit = string(r)
+
+	return TokenInfo{
+		Token: Token{TokenKindString, lit},
+		Pos:   TokenPos{1, 1, 1},
+	}, nil
+}
+
+func (l *Lexer) lexWhitespace() (TokenInfo, error) {
+	lit, span, err := lexUntil(l.reader, unicode.IsSpace, -1)
 
 	if err != nil {
 		return TokenInfo{}, err
 	}
 
 	return TokenInfo{
-		Token: Token{TokenKindUnderscoreRune, lit},
+		Token: Token{TokenKindWhitespace, lit},
 		Pos:   TokenPos{span, span, span},
 	}, nil
 }
 
-func (l *Lexer) lexDot() (TokenInfo, error) {
-	return TokenInfo{
-		Token: Token{TokenKindDotRune, "."},
-		Pos:   TokenPos{1, 1, 1},
-	}, nil
-}
+func (l *Lexer) lexNumber() (TokenInfo, error) {
+	lit, span, err := lexUntil(l.reader, unicode.IsDigit, -1)
 
-func (l *Lexer) lexEscape() (TokenInfo, error) {
+	if err != nil {
+		return TokenInfo{}, err
+	}
+
+	r, _, err := peekOneRune(l.reader)
+
+	if err == ErrEOF {
+		return TokenInfo{
+			Token: Token{TokenKindNumber, lit},
+			Pos:   TokenPos{span, span, span},
+		}, nil
+	}
+
+	if err != nil {
+		return TokenInfo{}, err
+	}
+
+	if r == '.' {
+		_, _, err := l.reader.ReadRune()
+		if err != nil {
+			return TokenInfo{}, ErrRead
+		}
+
+		return TokenInfo{
+			Token: Token{TokenKindNumbering, lit},
+			Pos:   TokenPos{span, span, span},
+		}, nil
+	}
+
 	return TokenInfo{
-		Token: Token{TokenKindEscapeRune, "\\"},
-		Pos:   TokenPos{1, 1, 1},
+		Token: Token{TokenKindNumber, lit},
+		Pos:   TokenPos{span, span, span},
 	}, nil
 }
 
 func (l *Lexer) lexString() (TokenInfo, error) {
-	lit, span, err := lexUntil(l.reader, runeIsNotSyntax, -1)
+	lit, span, err := lexUntil(l.reader, runeIsNotOneOf(
+		TokenKindNewline,
+		TokenKindNumber,
+		TokenKindRuneHash,
+		TokenKindRuneDash,
+		TokenKindRuneAsterisk,
+		TokenKindRuneUnderscore,
+		TokenKindRuneEscape,
+	), -1)
 
 	if err != nil {
 		return TokenInfo{}, err

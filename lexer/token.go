@@ -28,12 +28,11 @@ const (
 	TokenKindNumber
 
 	// Syntax (rune)
-	TokenKindHashRune
-	TokenKindDashRune
-	TokenKindAsteriskRune
-	TokenKindUnderscoreRune
-	TokenKindDotRune
-	TokenKindEscapeRune
+	TokenKindRuneHash
+	TokenKindRuneDash
+	TokenKindRuneAsterisk
+	TokenKindRuneUnderscore
+	TokenKindRuneEscape
 
 	// Semantic
 	TokenKindHeading1
@@ -50,19 +49,47 @@ const (
 	TokenKindNumbering
 )
 
+var tokenKindDebugNames = []string{
+	"WHITESPACE",
+	"NEWLINE",
+	"STRING",
+	"NUMBER",
+
+	"RUNE_HASH",
+	"RUNE_DASH",
+	"RUNE_ASTERISK",
+	"RUNE_UNDERSCORE",
+	"RUNE_ESCAPE",
+
+	"HEADING_1",
+	"HEADING_2",
+	"HEADING_3",
+	"HEADING_4",
+	"HEADING_5",
+	"HEADING_6",
+	"DASH",
+	"SPACER",
+	"BOLD",
+	"ITALIC",
+	"BOLD_ITALIC",
+	"NUMBERING",
+}
+
+func (k TokenKind) DebugName() string {
+	return tokenKindDebugNames[k]
+}
+
 func (k TokenKind) Rune() rune {
 	switch k {
-	case TokenKindHashRune:
+	case TokenKindRuneHash:
 		return '#'
-	case TokenKindDashRune:
+	case TokenKindRuneDash:
 		return '-'
-	case TokenKindAsteriskRune:
+	case TokenKindRuneAsterisk:
 		return '*'
-	case TokenKindUnderscoreRune:
+	case TokenKindRuneUnderscore:
 		return '_'
-	case TokenKindDotRune:
-		return '.'
-	case TokenKindEscapeRune:
+	case TokenKindRuneEscape:
 		return '\\'
 	default:
 		return -1
@@ -88,27 +115,23 @@ func runeIs(k TokenKind) func(rune) bool {
 			if unicode.IsNumber(r) {
 				return true
 			}
-		case TokenKindHashRune:
+		case TokenKindRuneHash:
 			if r == '#' {
 				return true
 			}
-		case TokenKindDashRune:
+		case TokenKindRuneDash:
 			if r == '-' {
 				return true
 			}
-		case TokenKindAsteriskRune:
+		case TokenKindRuneAsterisk:
 			if r == '*' {
 				return true
 			}
-		case TokenKindUnderscoreRune:
+		case TokenKindRuneUnderscore:
 			if r == '_' {
 				return true
 			}
-		case TokenKindDotRune:
-			if r == '.' {
-				return true
-			}
-		case TokenKindEscapeRune:
+		case TokenKindRuneEscape:
 			if r == '\\' {
 				return true
 			}
@@ -130,17 +153,14 @@ func runeIsOneOf(kinds ...TokenKind) func(rune) bool {
 	}
 }
 
-func runeIsSyntax(r rune) bool {
-	return runeIsOneOf(
-		TokenKindHashRune,
-		TokenKindDashRune,
-		TokenKindAsteriskRune,
-		TokenKindUnderscoreRune,
-		TokenKindDotRune,
-		TokenKindEscapeRune,
-	)(r)
-}
+func runeIsNotOneOf(kinds ...TokenKind) func(rune) bool {
+	return func(r rune) bool {
+		for _, k := range kinds {
+			if runeIs(k)(r) {
+				return false
+			}
+		}
 
-func runeIsNotSyntax(r rune) bool {
-	return !runeIsSyntax(r)
+		return true
+	}
 }
