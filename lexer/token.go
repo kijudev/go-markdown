@@ -5,19 +5,19 @@ import "unicode"
 type TokenKind uint8
 
 type Token struct {
-	kind TokenKind
-	lit  string
+	Kind TokenKind
+	Lit  string
 }
 
 type TokenPos struct {
-	x   int
-	y   int
-	abs int
+	X   int
+	Y   int
+	Abs int
 }
 
 type TokenInfo struct {
-	token Token
-	pos   TokenPos
+	Token Token
+	Pos   TokenPos
 }
 
 const (

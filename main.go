@@ -1,7 +1,23 @@
 package main
 
+import (
+	"strings"
+
+	"github.com/kijudev/go-markdown/lexer"
+)
+
 func main() {
-	for i := range 10 {
-		println(i)
+	lx := lexer.NewLexer(strings.NewReader("# a"))
+
+	tokens, err := lx.Tokenize()
+	if err != nil {
+		panic(err)
+	}
+
+	for _, ti := range tokens {
+		t := ti.Token
+		pos := ti.Pos
+
+		println(t.Kind, t.Lit, pos.Abs)
 	}
 }

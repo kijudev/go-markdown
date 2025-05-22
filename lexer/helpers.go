@@ -5,7 +5,7 @@ import (
 	"io"
 )
 
-func peekOneRune(reader bufio.Reader) (rune, int, error) {
+func peekOneRune(reader *bufio.Reader) (rune, int, error) {
 	r, _, err := reader.ReadRune()
 
 	if err == io.EOF {
@@ -20,7 +20,7 @@ func peekOneRune(reader bufio.Reader) (rune, int, error) {
 	return r, 1, nil
 }
 
-func peekRunes(reader bufio.Reader, count int) ([]rune, int, error) {
+func peekRunes(reader *bufio.Reader, count int) ([]rune, int, error) {
 	var runes []rune
 
 	for _ = range count {
@@ -41,52 +41,60 @@ func peekRunes(reader bufio.Reader, count int) ([]rune, int, error) {
 	return runes, len(runes), nil
 }
 
-func lexWhen(reader bufio.Reader, matcher func(rune) bool, kind TokenKind) (Token, int, error) {
-	token := Token{kind, ""}
-	i := -1
+func lexWhen(reader *bufio.Reader, matcher func(rune) bool, limit int) (string, int, error) {
+	var lit string
+	span := 0
 
 	for {
+		if limit > 0 && span >= limit {
+			return lit, span, nil
+		}
+
 		r, _, err := reader.ReadRune()
-		i++
 
 		if err == io.EOF {
-			return token, i, nil
+			return lit, span, nil
 		}
 
 		if err != nil {
-			return token, i, ErrRead
+			return lit, span, ErrRead
 		}
 
 		if !matcher(r) {
 			_ = reader.UnreadRune()
-			return token, i, nil
+			return lit, span, nil
 		}
 
-		token.lit += string(r)
+		lit += string(r)
+		span++
 	}
 }
 
-func lexUntil(reader bufio.Reader, matcher func(rune) bool, kind TokenKind) (Token, int, error) {
-	token := Token{kind, ""}
-	i := -1
+func lexUntil(reader *bufio.Reader, matcher func(rune) bool, limit int) (string, int, error) {
+	var lit string
+	span := 0
 
 	for {
+		if limit > 0 && span >= limit {
+			return lit, span, nil
+		}
+
 		r, _, err := reader.ReadRune()
-		i++
 
 		if err == io.EOF {
-			return token, i, nil
+			return lit, span, nil
 		}
 
 		if err != nil {
-			return token, i, ErrRead
+			return lit, span, ErrRead
 		}
 
 		if matcher(r) {
 			_ = reader.UnreadRune()
-			return token, i, nil
+			return lit, span, nil
 		}
 
-		token.lit += string(r)
+		lit += string(r)
+		span++
 	}
 }

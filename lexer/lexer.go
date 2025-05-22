@@ -42,12 +42,49 @@ func (l *Lexer) Tokenize() ([]TokenInfo, error) {
 func (l *Lexer) Reset() {
 	l.reader.Reset(l.source)
 	l.pos = TokenPos{
-		x:   0,
-		y:   0,
-		abs: 0,
+		X:   0,
+		Y:   0,
+		Abs: 0,
 	}
 }
 
 func (l *Lexer) Lex() (TokenInfo, error) {
+	r, _, err := peekOneRune(l.reader)
 
+	if err != nil {
+		return TokenInfo{}, err
+	}
+
+	switch r {
+	case '#':
+		return l.lexHash()
+	default:
+		return l.lexString()
+	}
+}
+
+func (l *Lexer) lexHash() (TokenInfo, error) {
+	lit, span, err := lexWhen(l.reader, func(r rune) bool { return r == '#' }, 6)
+
+	if err != nil {
+		return TokenInfo{}, err
+	}
+
+	return TokenInfo{
+		Token: Token{TokenKindHash, lit},
+		Pos:   TokenPos{span, span, span},
+	}, nil
+}
+
+func (l *Lexer) lexString() (TokenInfo, error) {
+	lit, span, err := lexWhen(l.reader, func(r rune) bool { return true }, -1)
+
+	if err != nil {
+		return TokenInfo{}, err
+	}
+
+	return TokenInfo{
+		Token: Token{TokenKindString, lit},
+		Pos:   TokenPos{span, span, span},
+	}, nil
 }
