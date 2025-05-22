@@ -26,6 +26,7 @@ const (
 	TokenKindString
 	TokenKindNumber
 
+	// Syntax
 	TokenKindHash
 	TokenKindDash
 	TokenKindAsterisk
@@ -35,8 +36,29 @@ const (
 	TokenKindEQ
 )
 
-func IsOneOf(r rune, kinds TokenKind) bool {
-	for k := range kinds {
+func (k TokenKind) Rune() rune {
+	switch k {
+	case TokenKindHash:
+		return '#'
+	case TokenKindDash:
+		return '-'
+	case TokenKindAsterisk:
+		return '*'
+	case TokenKindUnderscore:
+		return '_'
+	case TokenKindDot:
+		return '.'
+	case TokenKindEscape:
+		return '\\'
+	case TokenKindEQ:
+		return '='
+	default:
+		return -1
+	}
+}
+
+func runeIs(k TokenKind) func(rune) bool {
+	return func(r rune) bool {
 		switch k {
 		case TokenKindWhitespace:
 			if unicode.IsSpace(r) {
@@ -83,7 +105,31 @@ func IsOneOf(r rune, kinds TokenKind) bool {
 				return true
 			}
 		}
-	}
 
-	return false
+		return false
+	}
+}
+
+func runeIsOneOf(kinds ...TokenKind) func(rune) bool {
+	return func(r rune) bool {
+		for _, k := range kinds {
+			if runeIs(k)(r) {
+				return true
+			}
+		}
+
+		return false
+	}
+}
+
+func runeIsSyntax(r rune) bool {
+	return runeIsOneOf(
+		TokenKindHash,
+		TokenKindDash,
+		TokenKindAsterisk,
+		TokenKindUnderscore,
+		TokenKindDot,
+		TokenKindEscape,
+		TokenKindEQ,
+	)(r)
 }
