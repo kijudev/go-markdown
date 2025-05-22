@@ -1,4 +1,4 @@
-package lexer
+package lexerold
 
 type TokenKind uint8
 

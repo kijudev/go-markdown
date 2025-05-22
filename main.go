@@ -1,26 +1,21 @@
 package main
 
 import (
-	"os"
-
-	"github.com/kijudev/go-markdown/lexer"
+	"bufio"
+	"strings"
 )
 
 func main() {
-	file, err := os.Open("./README.md")
+	rs := strings.NewReader("# lubię placki 123")
+	r := bufio.NewReader(rs)
 
-	if err != nil {
-		panic(err)
-	}
+	for {
+		rune, size, err := r.ReadRune()
 
-	lexer := lexer.NewLexer(file)
-	tokens, err := lexer.Tokenize()
+		if err != nil {
+			panic(err)
+		}
 
-	if err != nil {
-		panic(err)
-	}
-
-	for _, t := range tokens {
-		println(t.Literal)
+		println(size, string(rune))
 	}
 }
