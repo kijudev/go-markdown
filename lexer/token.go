@@ -21,37 +21,49 @@ type TokenInfo struct {
 }
 
 const (
+	// Base
 	TokenKindWhitespace TokenKind = iota
 	TokenKindNewline
 	TokenKindString
 	TokenKindNumber
 
-	// Syntax
-	TokenKindHash
+	// Syntax (rune)
+	TokenKindHashRune
+	TokenKindDashRune
+	TokenKindAsteriskRune
+	TokenKindUnderscoreRune
+	TokenKindDotRune
+	TokenKindEscapeRune
+
+	// Semantic
+	TokenKindHeading1
+	TokenKindHeading2
+	TokenKindHeading3
+	TokenKindHeading4
+	TokenKindHeading5
+	TokenKindHeading6
 	TokenKindDash
-	TokenKindAsterisk
-	TokenKindUnderscore
-	TokenKindDot
-	TokenKindEscape
-	TokenKindEQ
+	TokenKindSpacer
+	TokenKindBold
+	TokenKindItalic
+	TokenKindBoldItalic
+	TokenKindNumbering
 )
 
 func (k TokenKind) Rune() rune {
 	switch k {
-	case TokenKindHash:
+	case TokenKindHashRune:
 		return '#'
-	case TokenKindDash:
+	case TokenKindDashRune:
 		return '-'
-	case TokenKindAsterisk:
+	case TokenKindAsteriskRune:
 		return '*'
-	case TokenKindUnderscore:
+	case TokenKindUnderscoreRune:
 		return '_'
-	case TokenKindDot:
+	case TokenKindDotRune:
 		return '.'
-	case TokenKindEscape:
+	case TokenKindEscapeRune:
 		return '\\'
-	case TokenKindEQ:
-		return '='
 	default:
 		return -1
 	}
@@ -76,32 +88,28 @@ func runeIs(k TokenKind) func(rune) bool {
 			if unicode.IsNumber(r) {
 				return true
 			}
-		case TokenKindHash:
+		case TokenKindHashRune:
 			if r == '#' {
 				return true
 			}
-		case TokenKindDash:
+		case TokenKindDashRune:
 			if r == '-' {
 				return true
 			}
-		case TokenKindAsterisk:
+		case TokenKindAsteriskRune:
 			if r == '*' {
 				return true
 			}
-		case TokenKindUnderscore:
+		case TokenKindUnderscoreRune:
 			if r == '_' {
 				return true
 			}
-		case TokenKindDot:
+		case TokenKindDotRune:
 			if r == '.' {
 				return true
 			}
-		case TokenKindEscape:
+		case TokenKindEscapeRune:
 			if r == '\\' {
-				return true
-			}
-		case TokenKindEQ:
-			if r == '=' {
 				return true
 			}
 		}
@@ -124,13 +132,12 @@ func runeIsOneOf(kinds ...TokenKind) func(rune) bool {
 
 func runeIsSyntax(r rune) bool {
 	return runeIsOneOf(
-		TokenKindHash,
-		TokenKindDash,
-		TokenKindAsterisk,
-		TokenKindUnderscore,
-		TokenKindDot,
-		TokenKindEscape,
-		TokenKindEQ,
+		TokenKindHashRune,
+		TokenKindDashRune,
+		TokenKindAsteriskRune,
+		TokenKindUnderscoreRune,
+		TokenKindDotRune,
+		TokenKindEscapeRune,
 	)(r)
 }
 
