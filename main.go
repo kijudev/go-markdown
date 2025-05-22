@@ -1,13 +1,19 @@
 package main
 
 import (
-	"strings"
+	"os"
 
 	"github.com/kijudev/go-markdown/lexer"
 )
 
 func main() {
-	lx := lexer.NewLexer(strings.NewReader("#########"))
+	file, err := os.Open("./README.md")
+
+	if err != nil {
+		panic(err)
+	}
+
+	lx := lexer.NewLexer(file)
 
 	tokens, err := lx.Tokenize()
 	if err != nil {
@@ -16,8 +22,7 @@ func main() {
 
 	for _, ti := range tokens {
 		t := ti.Token
-		pos := ti.Pos
 
-		println(pos.Abs, t.Lit, t.Kind)
+		println(t.Kind.DebugName(), t.Lit)
 	}
 }

@@ -68,6 +68,10 @@ func (l *Lexer) Lex() (TokenInfo, error) {
 	case TokenKindRuneEscape.Rune():
 		return l.lexEscape()
 	default:
+		if r == '\n' {
+			return l.lexNewline()
+		}
+
 		if unicode.IsSpace(r) {
 			return l.lexWhitespace()
 		}
@@ -210,6 +214,23 @@ func (l *Lexer) lexEscape() (TokenInfo, error) {
 
 	return TokenInfo{
 		Token: Token{TokenKindString, lit},
+		Pos:   TokenPos{1, 1, 1},
+	}, nil
+}
+
+func (l *Lexer) lexNewline() (TokenInfo, error) {
+	_, _, err := l.reader.ReadRune()
+
+	if err == io.EOF {
+		return TokenInfo{}, ErrEOF
+	}
+
+	if err != nil {
+		return TokenInfo{}, ErrRead
+	}
+
+	return TokenInfo{
+		Token: Token{TokenKindNewline, "\n"},
 		Pos:   TokenPos{1, 1, 1},
 	}, nil
 }

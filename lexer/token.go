@@ -92,7 +92,7 @@ func (k TokenKind) Rune() rune {
 	case TokenKindRuneEscape:
 		return '\\'
 	default:
-		return -1
+		panic("Cannot access the rune value from non-rune tokens.")
 	}
 }
 
