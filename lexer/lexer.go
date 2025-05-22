@@ -64,7 +64,7 @@ func (l *Lexer) Lex() (TokenInfo, error) {
 }
 
 func (l *Lexer) lexHash() (TokenInfo, error) {
-	lit, span, err := lexWhen(l.reader, func(r rune) bool { return r == '#' }, 6)
+	lit, span, err := lexUntil(l.reader, func(r rune) bool { return r == '#' }, 6)
 
 	if err != nil {
 		return TokenInfo{}, err
@@ -77,7 +77,7 @@ func (l *Lexer) lexHash() (TokenInfo, error) {
 }
 
 func (l *Lexer) lexString() (TokenInfo, error) {
-	lit, span, err := lexWhen(l.reader, func(r rune) bool { return true }, -1)
+	lit, span, err := lexUntil(l.reader, func(r rune) bool { return true }, -1)
 
 	if err != nil {
 		return TokenInfo{}, err

@@ -41,7 +41,7 @@ func peekRunes(reader *bufio.Reader, count int) ([]rune, int, error) {
 	return runes, len(runes), nil
 }
 
-func lexWhen(reader *bufio.Reader, matcher func(rune) bool, limit int) (string, int, error) {
+func lexUntil(reader *bufio.Reader, matcher func(rune) bool, limit int) (string, int, error) {
 	var lit string
 	span := 0
 
@@ -70,7 +70,7 @@ func lexWhen(reader *bufio.Reader, matcher func(rune) bool, limit int) (string, 
 	}
 }
 
-func lexUntil(reader *bufio.Reader, matcher func(rune) bool, limit int) (string, int, error) {
+func lexUpTo(reader *bufio.Reader, matcher func(rune) bool, limit int) (string, int, error) {
 	var lit string
 	span := 0
 
