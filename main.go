@@ -1,29 +1,36 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
 
 	"github.com/kijudev/go-markdown/lexer"
 )
 
 func main() {
-	file, err := os.Open("./README.md")
-
+	readmeFile, err := os.Open("./README.md")
 	if err != nil {
 		panic(err)
 	}
+	defer readmeFile.Close()
 
-	lx := lexer.NewLexer(file)
+	lx := lexer.NewLexer(readmeFile)
 
 	tokens, err := lx.Tokenize()
 	if err != nil {
 		panic(err)
 	}
 
-	for _, ti := range tokens {
-		t := ti.Token
-		pos := ti.Pos
-
-		println(t.Kind.DebugName(), pos.X, pos.Y, t.Lit)
+	b, err := json.Marshal(tokens)
+	if err != nil {
+		panic(err)
 	}
+
+	jsonFile, err := os.Create("./readme.json")
+	if err != nil {
+		panic(err)
+	}
+	defer jsonFile.Close()
+
+	jsonFile.Write(b)
 }

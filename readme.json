@@ -1,0 +1,72 @@
+[
+  {
+    "Token": { "Kind": 9, "Lit": "#" },
+    "Pos": { "X": 0, "Y": 0, "Abs": 0 },
+    "Span": 1
+  },
+  {
+    "Token": { "Kind": 0, "Lit": "  " },
+    "Pos": { "X": 1, "Y": 0, "Abs": 1 },
+    "Span": 2
+  },
+  {
+    "Token": { "Kind": 2, "Lit": "asdasdasd" },
+    "Pos": { "X": 3, "Y": 0, "Abs": 3 },
+    "Span": 9
+  },
+  {
+    "Token": { "Kind": 1, "Lit": "\n" },
+    "Pos": { "X": 12, "Y": 0, "Abs": 12 },
+    "Span": 1
+  },
+  {
+    "Token": { "Kind": 1, "Lit": "\n" },
+    "Pos": { "X": 0, "Y": 1, "Abs": 13 },
+    "Span": 1
+  },
+  {
+    "Token": { "Kind": 20, "Lit": "1" },
+    "Pos": { "X": 0, "Y": 2, "Abs": 14 },
+    "Span": 1
+  },
+  {
+    "Token": { "Kind": 0, "Lit": " " },
+    "Pos": { "X": 2, "Y": 2, "Abs": 16 },
+    "Span": 1
+  },
+  {
+    "Token": { "Kind": 2, "Lit": "asdasdasd" },
+    "Pos": { "X": 3, "Y": 2, "Abs": 17 },
+    "Span": 9
+  },
+  {
+    "Token": { "Kind": 1, "Lit": "\n" },
+    "Pos": { "X": 12, "Y": 2, "Abs": 26 },
+    "Span": 1
+  },
+  {
+    "Token": { "Kind": 0, "Lit": "  " },
+    "Pos": { "X": 0, "Y": 3, "Abs": 27 },
+    "Span": 2
+  },
+  {
+    "Token": { "Kind": 20, "Lit": "2" },
+    "Pos": { "X": 2, "Y": 3, "Abs": 29 },
+    "Span": 1
+  },
+  {
+    "Token": { "Kind": 0, "Lit": " " },
+    "Pos": { "X": 4, "Y": 3, "Abs": 31 },
+    "Span": 1
+  },
+  {
+    "Token": { "Kind": 2, "Lit": "asdasd" },
+    "Pos": { "X": 5, "Y": 3, "Abs": 32 },
+    "Span": 6
+  },
+  {
+    "Token": { "Kind": 1, "Lit": "\n" },
+    "Pos": { "X": 11, "Y": 3, "Abs": 38 },
+    "Span": 1
+  }
+]
