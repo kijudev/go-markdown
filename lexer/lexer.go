@@ -54,26 +54,26 @@ func (l *Lexer) Lex() (TokenInfo, error) {
 	}
 
 	switch r {
-	case TokenKindRuneHash.Rune():
+	case RuneKindHash.Rune():
 		return l.lexHash()
-	case TokenKindRuneDash.Rune():
+	case RuneKindDash.Rune():
 		return l.lexDash()
-	case TokenKindRuneAsterisk.Rune():
+	case RuneKindAsterisk.Rune():
 		return l.lexAsterisk()
-	case TokenKindRuneUnderscore.Rune():
+	case RuneKindUnderscore.Rune():
 		return l.lexUnderscore()
-	case TokenKindRuneEscape.Rune():
+	case RuneKindEscape.Rune():
 		return l.lexEscape()
 	default:
-		if r == '\n' {
+		if runeIs(RuneKindNewline)(r) {
 			return l.lexNewline()
 		}
 
-		if unicode.IsSpace(r) {
+		if runeIs(RuneKindWhitespace)(r) {
 			return l.lexWhitespace()
 		}
 
-		if unicode.IsDigit(r) {
+		if runeIs(RuneKindNumber)(r) {
 			return l.lexNumber()
 		}
 
@@ -82,7 +82,7 @@ func (l *Lexer) Lex() (TokenInfo, error) {
 }
 
 func (l *Lexer) lexHash() (TokenInfo, error) {
-	lit, span, err := lexUntil(l.reader, runeIs(TokenKindRuneHash), 6)
+	lit, span, err := lexUntil(l.reader, runeIs(RuneKindHash), 6)
 	pos := l.pos
 
 	if err != nil {
@@ -114,11 +114,12 @@ func (l *Lexer) lexHash() (TokenInfo, error) {
 		Token: Token{kind, lit},
 		Pos:   pos,
 		Span:  span,
+		Raw:   lit,
 	}, nil
 }
 
 func (l *Lexer) lexDash() (TokenInfo, error) {
-	lit, span, err := lexUntil(l.reader, runeIs(TokenKindRuneDash), -1)
+	lit, span, err := lexUntil(l.reader, runeIs(RuneKindDash), -1)
 	pos := l.pos
 
 	if err != nil {
@@ -142,11 +143,12 @@ func (l *Lexer) lexDash() (TokenInfo, error) {
 		Token: Token{kind, lit},
 		Pos:   pos,
 		Span:  span,
+		Raw:   lit,
 	}, nil
 }
 
 func (l *Lexer) lexAsterisk() (TokenInfo, error) {
-	lit, span, err := lexUntil(l.reader, runeIs(TokenKindRuneAsterisk), 3)
+	lit, span, err := lexUntil(l.reader, runeIs(RuneKindAsterisk), 3)
 	pos := l.pos
 
 	if err != nil {
@@ -172,11 +174,12 @@ func (l *Lexer) lexAsterisk() (TokenInfo, error) {
 		Token: Token{kind, lit},
 		Pos:   pos,
 		Span:  span,
+		Raw:   lit,
 	}, nil
 }
 
 func (l *Lexer) lexUnderscore() (TokenInfo, error) {
-	lit, span, err := lexUntil(l.reader, runeIs(TokenKindRuneUnderscore), 3)
+	lit, span, err := lexUntil(l.reader, runeIs(RuneKindUnderscore), 3)
 	pos := l.pos
 
 	if err != nil {
@@ -202,6 +205,7 @@ func (l *Lexer) lexUnderscore() (TokenInfo, error) {
 		Token: Token{kind, lit},
 		Pos:   pos,
 		Span:  span,
+		Raw:   lit,
 	}, nil
 }
 
@@ -228,6 +232,7 @@ func (l *Lexer) lexEscape() (TokenInfo, error) {
 			Token: Token{TokenKindString, "\\"},
 			Pos:   pos,
 			Span:  1,
+			Raw:   "\\",
 		}, nil
 	}
 
@@ -238,10 +243,10 @@ func (l *Lexer) lexEscape() (TokenInfo, error) {
 	lit = string(r)
 
 	if runeIsOneOf(
-		TokenKindRuneHash,
-		TokenKindRuneDash,
-		TokenKindRuneAsterisk,
-		TokenKindRuneUnderscore,
+		RuneKindHash,
+		RuneKindDash,
+		RuneKindAsterisk,
+		RuneKindUnderscore,
 	)(r) {
 		pos.X++
 		pos.Abs++
@@ -252,6 +257,7 @@ func (l *Lexer) lexEscape() (TokenInfo, error) {
 			Token: Token{TokenKindString, lit},
 			Pos:   pos,
 			Span:  1,
+			Raw:   "\\" + lit,
 		}, nil
 	}
 
@@ -262,6 +268,7 @@ func (l *Lexer) lexEscape() (TokenInfo, error) {
 		Token: Token{TokenKindString, "\\" + lit},
 		Pos:   pos,
 		Span:  2,
+		Raw:   "\\" + lit,
 	}, nil
 }
 
@@ -285,6 +292,7 @@ func (l *Lexer) lexNewline() (TokenInfo, error) {
 		Token: Token{TokenKindNewline, "\n"},
 		Pos:   pos,
 		Span:  1,
+		Raw:   "\n",
 	}, nil
 }
 
@@ -303,6 +311,7 @@ func (l *Lexer) lexWhitespace() (TokenInfo, error) {
 		Token: Token{TokenKindWhitespace, lit},
 		Pos:   pos,
 		Span:  span,
+		Raw:   lit,
 	}, nil
 }
 
@@ -321,6 +330,7 @@ func (l *Lexer) lexNumber() (TokenInfo, error) {
 			Token: Token{TokenKindNumber, lit},
 			Pos:   pos,
 			Span:  span,
+			Raw:   lit,
 		}, nil
 	}
 
@@ -341,6 +351,7 @@ func (l *Lexer) lexNumber() (TokenInfo, error) {
 			Token: Token{TokenKindNumbering, lit},
 			Pos:   pos,
 			Span:  span,
+			Raw:   lit + ".",
 		}, nil
 	}
 
@@ -351,18 +362,19 @@ func (l *Lexer) lexNumber() (TokenInfo, error) {
 		Token: Token{TokenKindNumber, lit},
 		Pos:   pos,
 		Span:  span,
+		Raw:   lit,
 	}, nil
 }
 
 func (l *Lexer) lexString() (TokenInfo, error) {
 	lit, span, err := lexUntil(l.reader, runeIsNotOneOf(
-		TokenKindNewline,
-		TokenKindNumber,
-		TokenKindRuneHash,
-		TokenKindRuneDash,
-		TokenKindRuneAsterisk,
-		TokenKindRuneUnderscore,
-		TokenKindRuneEscape,
+		RuneKindNewline,
+		RuneKindNumber,
+		RuneKindHash,
+		RuneKindDash,
+		RuneKindAsterisk,
+		RuneKindUnderscore,
+		RuneKindEscape,
 	), -1)
 	pos := l.pos
 
@@ -377,5 +389,6 @@ func (l *Lexer) lexString() (TokenInfo, error) {
 		Token: Token{TokenKindString, lit},
 		Pos:   pos,
 		Span:  span,
+		Raw:   lit,
 	}, nil
 }
