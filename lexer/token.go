@@ -21,6 +21,11 @@ type TokenInfo struct {
 	Raw   string
 }
 
+type TokenInfoDebug struct {
+	TokenInfo
+	Name string
+}
+
 const (
 	// Base
 	TokenKindWhitespace TokenKind = iota
@@ -60,6 +65,10 @@ var tokenKindDebugNames = []string{
 	"ITALIC",
 	"BOLD_ITALIC",
 	"NUMBERING",
+}
+
+func NewTokenInfoDebug(info TokenInfo) TokenInfoDebug {
+	return TokenInfoDebug{info, info.Token.Kind.DebugName()}
 }
 
 func (k TokenKind) DebugName() string {

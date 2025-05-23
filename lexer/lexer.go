@@ -20,6 +20,20 @@ func NewLexer(reader io.Reader) *Lexer {
 	}
 }
 
+func (l *Lexer) TokenizeDebug() ([]TokenInfoDebug, error) {
+	tokens, err := l.Tokenize()
+	if err != nil {
+		return []TokenInfoDebug{}, err
+	}
+
+	var infos []TokenInfoDebug
+	for _, t := range tokens {
+		infos = append(infos, NewTokenInfoDebug(t))
+	}
+
+	return infos, nil
+}
+
 func (l *Lexer) Tokenize() ([]TokenInfo, error) {
 	l.Reset()
 	var tokens []TokenInfo
@@ -44,6 +58,11 @@ func (l *Lexer) Tokenize() ([]TokenInfo, error) {
 func (l *Lexer) Reset() {
 	l.reader.Reset(l.source)
 	l.pos = TokenPos{0, 0, 0}
+}
+
+func (l *Lexer) LexDebug(TokenInfoDebug, error) (TokenInfoDebug, error) {
+	info, err := l.Lex()
+	return NewTokenInfoDebug(info), err
 }
 
 func (l *Lexer) Lex() (TokenInfo, error) {
